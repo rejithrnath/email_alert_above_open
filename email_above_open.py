@@ -50,7 +50,9 @@ while True:
     for ticker in stocks.keys():
         ohlcv_data[ticker] = yf.download(ticker,start,end, interval=interval_duration, progress = False)
         trading_current_time = str(datetime.datetime.now().hour)+":"+str(datetime.datetime.now().minute)
-        if ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker] and is_between(trading_current_time, (trading_start_time, trading_end_time)) ==True:
+        if (ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker] and \
+            is_between(trading_current_time, (trading_start_time, trading_end_time)))\
+            == True:
            print(f'{ticker} is above. Avg.Value = {stocks[ticker]} and Current value = {ohlcv_data[ticker]["Adj Close"][-1]} ')
            message = f'{ticker} is above. Avg.Value = {stocks[ticker]} and Current value = Current value {ohlcv_data[ticker]["Adj Close"][-1]} '
            context = ssl.create_default_context()
@@ -62,4 +64,8 @@ while True:
             server.sendmail(sender_email, receiver_email, message)
  
     print("\n")
-    time.sleep(time_sleep_input)
+    if ((trading_current_time == trading_start_time) or\
+            (trading_current_time == trading_end_time) ):
+        time.sleep(0)
+    else:    
+        time.sleep(time_sleep_input)
