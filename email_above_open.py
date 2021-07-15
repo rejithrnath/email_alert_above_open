@@ -16,7 +16,7 @@ stocks ={
          "MSFT":282.68
          }
 
-start = datetime.datetime.today() - datetime.timedelta(1)
+start = datetime.datetime.today() - datetime.timedelta(7)
 end = datetime.datetime.today()
 
 interval_duration = "1h"
@@ -28,19 +28,31 @@ smtp_server = "smtp.gmail.com"
 #add sender_gmail_email, reciever_email and gmail app password
 #details regards how to generate app password https://support.google.com/accounts/answer/185833?hl=en
 
-sender_email = "senderemail@gmail.com"
-receiver_email = "reciveremail@gmail.com"
-password = "password"
+sender_email = "enter_sender_email@gmail.com"
+receiver_email = "enter_receiver_email@gmail.com"
+password = "enter_password"
+
+
+# time duration for trading
+trading_start_time= "09:00"
+trading_end_time = "22:00"
+
+
+def is_between(time, time_range):
+    if time_range[1] < time_range[0]:
+        return time >= time_range[0] or time <= time_range[1]
+    return time_range[0] <= time <= time_range[1]
+
 
 while True:
     ohlcv_data ={}
     print(datetime.datetime.now())
     for ticker in stocks.keys():
         ohlcv_data[ticker] = yf.download(ticker,start,end, interval=interval_duration, progress = False)
-        if ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker]:
-           print(f'{ticker} is above. Current value {stocks[ticker]} ')
-           message = f'{ticker} is above. Current value {stocks[ticker]} '
-           
+        trading_current_time = str(datetime.datetime.now().hour)+":"+str(datetime.datetime.now().minute)
+        if ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker] and is_between(trading_current_time, (trading_start_time, trading_end_time)) ==True:
+           print(f'{ticker} is above. Avg.Value = {stocks[ticker]} and Current value = {ohlcv_data[ticker]["Adj Close"][-1]} ')
+           message = f'{ticker} is above. Avg.Value = {stocks[ticker]} and Current value = Current value {ohlcv_data[ticker]["Adj Close"][-1]} '
            context = ssl.create_default_context()
            with smtplib.SMTP(smtp_server, port) as server:
             server.ehlo()  # Can be omitted
