@@ -17,8 +17,7 @@ stocks ={
          "MSFT":282.68
          }
 
-start = datetime.datetime.today() - datetime.timedelta(7)
-end = datetime.datetime.today()
+
 
 interval_duration = "1h"
 time_sleep_input = 3600 #print every hour
@@ -47,6 +46,8 @@ def download_and_email():
     ohlcv_data ={}
     print(datetime.datetime.now())
     for ticker in stocks.keys():
+        start = datetime.datetime.today() - datetime.timedelta(7)
+        end = datetime.datetime.today()
         ohlcv_data[ticker] = yf.download(ticker,start,end, interval=interval_duration, progress = False)
         trading_current_time = str(datetime.datetime.now().hour)+":"+str(datetime.datetime.now().minute)
         if (ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker])\
