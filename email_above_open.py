@@ -35,7 +35,7 @@ password = "enter_password"
 
 
 # time duration for trading
-trading_start_time_hour= 10
+trading_start_time_hour= 9
 trading_end_time_hour = 22
 
 
