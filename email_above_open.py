@@ -51,7 +51,7 @@ def download_and_email():
         ohlcv_data[ticker] = yf.download(ticker,start,end, interval=interval_duration, progress = False)
         trading_current_time = str(datetime.datetime.now().hour)+":"+str(datetime.datetime.now().minute)
         if (ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker])\
-            and ((datetime.datetime.now().hour >= trading_start_time_hour) and\
+            and datetime.weekday() <= 4 and ((datetime.datetime.now().hour >= trading_start_time_hour) and\
             (datetime.datetime.now().hour <= trading_end_time_hour))== True:
            print(f'{ticker} is above. Avg.Value = {stocks[ticker]} and Current value = {ohlcv_data[ticker]["Adj Close"][-1]} ')
            message = f'{ticker} is above. Avg.Value = {stocks[ticker]} and Current value = Current value {ohlcv_data[ticker]["Adj Close"][-1]} '
