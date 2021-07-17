@@ -78,9 +78,10 @@ def download_and_email():
         server.starttls(context=context)
         server.ehlo()  # Can be omitted
         server.login(sender_email, password)
-        server.sendmail(sender_email, receiver_email, message)
-        print("Email sent.")
-    print("\n")
+        if(message!=""):
+            server.sendmail(sender_email, receiver_email, message)
+            print("Email sent.")
+    
 # 
 # 
 
