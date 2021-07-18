@@ -9,6 +9,7 @@ import datetime
 import yfinance as yf
 import time
 import smtplib, ssl
+import temp.config
 # from apscheduler.schedulers.blocking import BlockingScheduler
 import schedule
 
@@ -46,9 +47,9 @@ smtp_server = "smtp.gmail.com"
 #add sender_gmail_email, reciever_email and gmail app password
 #details regards how to generate app password https://support.google.com/accounts/answer/185833?hl=en
 
-sender_email = "sender_email@gmail.com"
-receiver_email = "receiver_email@gmail.com"
-password = "gmail_app_password"
+sender_email = temp.config.sender_email
+receiver_email = temp.config.receiver_email
+password = temp.config.password
 
 
 # time duration for trading
