@@ -10,15 +10,14 @@ import yfinance as yf
 import time
 import smtplib, ssl
 import temp.config
-# from apscheduler.schedulers.blocking import BlockingScheduler
 import schedule
+import yfinance as yf2
 
 #add ticker and average price on below dictionary 
 #add ticker and average price on below dictionary 
 stocks ={
          "V":245.83,
          "MSFT":282.68,
-         "PRS.OL":2.77,
          "ARKK" :127.70,
          "CTXS":123.77,
          "CLOV":11.70,
@@ -28,18 +27,26 @@ stocks ={
          "MCHP":154.61,
          "ETH-USD":2169.2,
          "ARKK":130.3,
-         "ZAP.OL":40.24,
-         "PRS.OL":2.77,
          "AKRBP.OL":281.9,
-         "ORK.OL":93.3
-        
+         "ORK.OL":93.3,
+         "NVAX":217.98,
+         "SPCE":32.8,
+         "ADSK":298,
+         "VTR":61,
+         "SNPS":280,
+         "ISRG":961,
+         "PYPL":300,
+         "WLTW":222.8,
+         "TFX":388.5,
+         "COG":16.21,
+         
          }
 
 print ("RUNNING")
 print (f'Start time = {datetime.datetime.now()}')
 
-interval_duration = "1h"
-time_sleep_input = 3600 #print every hour
+interval_duration = "15m"
+# time_sleep_input = 3600 #print every hour
 
 port = 587  # For starttls
 smtp_server = "smtp.gmail.com"
@@ -57,22 +64,30 @@ trading_start_time_hour= "09"
 trading_end_time_hour = "22"
 
 # sched = BlockingScheduler()
-# @sched.scheduled_job('interval',hours=1)
+# @sched.scheduled_job('interval',hours=0.25)
 def download_and_email():
     ohlcv_data ={}
+    day_ohlcv_data = {}
+    df_pos = {}
     print(datetime.datetime.now())
     message =""
     for ticker in stocks.keys():
         start = datetime.datetime.today() - datetime.timedelta(1)
         end = datetime.datetime.today()
         ohlcv_data[ticker] = yf.download(ticker,start,end, interval=interval_duration, progress = False)
-        trading_current_time = str(datetime.datetime.now().hour)+":"+str(datetime.datetime.now().minute)
+        ohlcv_data[ticker]['gain_pc'] =(ohlcv_data[ticker]["Adj Close"] - stocks[ticker]) *100 /stocks[ticker]
+        day_ohlcv_data[ticker] = yf2.download(ticker,start,end, interval="1d", progress = False)
+        day_ohlcv_data[ticker]['daily_pc'] = (day_ohlcv_data[ticker]['Close'] /day_ohlcv_data[ticker]['Close'].shift(1) -1)*100
+        # trading_current_time = str(datetime.datetime.now().hour)+":"+str(datetime.datetime.now().minute)
         if (ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker])\
             and (datetime.datetime.today().weekday() <= 4) and ((datetime.datetime.now().hour >= int(trading_start_time_hour)) and\
             (datetime.datetime.now().hour <= int(trading_end_time_hour)))== True:
-           print(f'{ticker} is above. Avg.Value = {stocks[ticker]} and Current value = {ohlcv_data[ticker]["Adj Close"][-1]} ')
-           message = f'{ticker} is above. Avg.Value = {stocks[ticker]} and Current value = Current value {ohlcv_data[ticker]["Adj Close"][-1]} \n '
-           message+=message
+           print(f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ round(float(day_ohlcv_data[ticker]["daily_pc"][-1]),2) } %')
+           temp = f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ round(float(day_ohlcv_data[ticker]["daily_pc"][-1]),2) } %'
+           
+         
+           message=message+ "\n"+temp
+    
     context = ssl.create_default_context()
     with smtplib.SMTP(smtp_server, port) as server:
         server.ehlo()  # Can be omitted
@@ -82,11 +97,13 @@ def download_and_email():
         if(message!=""):
             server.sendmail(sender_email, receiver_email, message)
             print("Email sent.")
+    # print({message})
     
 # 
 # 
 
-schedule.every().hour.do(download_and_email)
+download_and_email()
+schedule.every(15).minutes.do(download_and_email)
 
 #scheduling every week day
 schedule.every().monday.at(trading_start_time_hour+":00").do(download_and_email)
