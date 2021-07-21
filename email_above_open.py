@@ -39,7 +39,7 @@ stocks ={
          "WLTW":222.8,
          "TFX":388.5,
          "COG":16.21,
-         
+         "HES":76.41,
          }
 
 print ("RUNNING")
