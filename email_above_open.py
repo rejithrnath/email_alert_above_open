@@ -1,8 +1,9 @@
+  
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 14 22:16:48 2021
-
-@author: rejit
+Created on Sun Jul 18 20:15:13 2021
+@author: Rejith Reghunathan 
+@email: rejithrnath@gmail.com
 """
 
 import datetime
@@ -11,9 +12,9 @@ import time
 import smtplib, ssl
 import temp.config
 import schedule
-import yfinance as yf2
+import requests
+from bs4 import BeautifulSoup
 
-#add ticker and average price on below dictionary 
 #add ticker and average price on below dictionary 
 stocks ={
          "V":245.83,
@@ -30,7 +31,6 @@ stocks ={
          "AKRBP.OL":281.9,
          "ORK.OL":93.3,
          "NVAX":217.98,
-         "SPCE":32.8,
          "ADSK":298,
          "VTR":61,
          "SNPS":280,
@@ -43,10 +43,9 @@ stocks ={
          }
 
 print ("RUNNING")
-print (f'Start time = {datetime.datetime.now()}')
+print (f'Started time = {datetime.datetime.now()}')
 
-interval_duration = "15m"
-# time_sleep_input = 3600 #print every hour
+interval_duration = "1h"
 
 port = 587  # For starttls
 smtp_server = "smtp.gmail.com"
@@ -60,30 +59,44 @@ password = temp.config.password
 
 
 # time duration for trading
-trading_start_time_hour= "09"
+trading_start_time_hour= "08"
 trading_end_time_hour = "22"
 
-# sched = BlockingScheduler()
-# @sched.scheduled_job('interval',hours=0.25)
 def download_and_email():
     ohlcv_data ={}
     day_ohlcv_data = {}
     df_pos = {}
+    gain_day={}
     print(datetime.datetime.now())
     message =""
     for ticker in stocks.keys():
-        start = datetime.datetime.today() - datetime.timedelta(1)
+        start = datetime.datetime.today() - datetime.timedelta(7)
         end = datetime.datetime.today()
         ohlcv_data[ticker] = yf.download(ticker,start,end, interval=interval_duration, progress = False)
         ohlcv_data[ticker]['gain_pc'] =(ohlcv_data[ticker]["Adj Close"] - stocks[ticker]) *100 /stocks[ticker]
-        day_ohlcv_data[ticker] = yf2.download(ticker,start,end, interval="1d", progress = False)
-        day_ohlcv_data[ticker]['daily_pc'] = (day_ohlcv_data[ticker]['Close'] /day_ohlcv_data[ticker]['Close'].shift(1) -1)*100
-        # trading_current_time = str(datetime.datetime.now().hour)+":"+str(datetime.datetime.now().minute)
+        
+        #Webscrapping
+        temp_dir = {}
+        url = 'https://finance.yahoo.com/quote/'+ticker+'/financials?p='+ticker
+        headers={'User-Agent': "Mozilla/5.0"}
+        page = requests.get(url, headers=headers)
+        page_content = page.content
+        soup = BeautifulSoup(page_content,'html.parser')
+        tabl = soup.find_all("div", {"class" : "D(ib) Va(m) Maw(65%) Ov(h)"})
+        for t in tabl:
+            rows = t.find_all("span", {"class" : "Trsdu(0.3s) Fw(500) Pstart(10px) Fz(24px) C($positiveColor)"})
+            for row in rows:
+                temp_dir[row.get_text(separator=' ').split(" ")[1]]=row.get_text(separator=' ').split(" ")[1]
+        
+        #combining all extracted information with the corresponding ticker
+        gain_day[ticker] = temp_dir
+        
+        
         if (ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker])\
             and (datetime.datetime.today().weekday() <= 4) and ((datetime.datetime.now().hour >= int(trading_start_time_hour)) and\
             (datetime.datetime.now().hour <= int(trading_end_time_hour)))== True:
-           print(f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ round(float(day_ohlcv_data[ticker]["daily_pc"][-1]),2) } %')
-           temp = f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ round(float(day_ohlcv_data[ticker]["daily_pc"][-1]),2) } %'
+           print(f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])[0]) } ')
+           temp = f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])[0]) } '
            
          
            message=message+ "\n"+temp
