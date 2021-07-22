@@ -31,13 +31,15 @@ stocks ={
          "AKRBP.OL":281.9,
          "ORK.OL":93.3,
          "NVAX":217.98,
-         "ADSK":298,
          "VTR":61,
          "SNPS":280,
          "ISRG":961,
          "PYPL":300,
          "COG":16.21,
          "HES":76.41,
+         "FIS":146,
+         "PM":97.2,
+         "WST":374,
          }
 
 print ("RUNNING")
