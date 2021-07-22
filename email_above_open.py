@@ -92,11 +92,31 @@ def download_and_email():
         gain_day[ticker] = temp_dir
         
         
+        #Gain Indicators
+        
+        ohlcv_data[ticker]['8dayEWM']  = ohlcv_data[ticker]['Adj Close'].ewm(span=8 , adjust=False).mean()
+        ohlcv_data[ticker]['13dayEWM'] = ohlcv_data[ticker]['Adj Close'].ewm(span=13, adjust=False).mean()
+        ohlcv_data[ticker]['21dayEWM'] = ohlcv_data[ticker]['Adj Close'].ewm(span=21, adjust=False).mean()
+        ohlcv_data[ticker]['34dayEWM'] = ohlcv_data[ticker]['Adj Close'].ewm(span=34, adjust=False).mean()
+        ohlcv_data[ticker]['55dayEWM'] = ohlcv_data[ticker]['Adj Close'].ewm(span=55, adjust=False).mean()
+        ohlcv_data[ticker]['89dayEWM'] = ohlcv_data[ticker]['Adj Close'].ewm(span=89, adjust=False).mean()
+        
+        if ohlcv_data[ticker]['Adj Close'][-1]> ohlcv_data[ticker]['21dayEWM'][-1]:
+            ohlcv_data[ticker]['above_21ema_on'] = "ON"
+        else:
+            ohlcv_data[ticker]['above_21ema_on'] = "OFF"
+        
+        
+        if ohlcv_data[ticker]['Adj Close'][-1]> ohlcv_data[ticker]['8dayEWM'][-1] > ohlcv_data[ticker]['13dayEWM'][-1] and ohlcv_data[ticker]['13dayEWM'][-1] > ohlcv_data[ticker]['21dayEWM'][-1] and ohlcv_data[ticker]['21dayEWM'][-1] > ohlcv_data[ticker]['34dayEWM'][-1] and ohlcv_data[ticker]['34dayEWM'][-1] > ohlcv_data[ticker]['55dayEWM'][-1] and ohlcv_data[ticker]['55dayEWM'][-1] > ohlcv_data[ticker]['89dayEWM'][-1]:
+            ohlcv_data[ticker]['stacked_on'] = "ON"
+        else :
+            ohlcv_data[ticker]['stacked_on'] = "OFF"
+        
         if (ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker])\
             and (datetime.datetime.today().weekday() <= 4) and ((datetime.datetime.now().hour >= int(trading_start_time_hour)) and\
             (datetime.datetime.now().hour <= int(trading_end_time_hour)))== True:
-           print(f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])[0]) } ')
-           temp = f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])[0]) } '
+           print(f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])[0]) },above 21EWM = {ohlcv_data[ticker]["above_21ema_on"][-1]}, stacked = {ohlcv_data[ticker]["stacked_on"][-1]} ')
+           temp = f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])[0]) } ,above 21EWM = {ohlcv_data[ticker]["above_21ema_on"][-1]}, stacked = {ohlcv_data[ticker]["stacked_on"][-1]} '
            
          
            message=message+ "\n"+temp
