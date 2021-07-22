@@ -36,8 +36,6 @@ stocks ={
          "SNPS":280,
          "ISRG":961,
          "PYPL":300,
-         "WLTW":222.8,
-         "TFX":388.5,
          "COG":16.21,
          "HES":76.41,
          }
@@ -45,6 +43,7 @@ stocks ={
 print ("RUNNING")
 print (f'Started time = {datetime.datetime.now()}')
 
+#interval_duration = "1h"
 interval_duration = "1h"
 
 port = 587  # For starttls
@@ -70,9 +69,10 @@ def download_and_email():
     print(datetime.datetime.now())
     message =""
     for ticker in stocks.keys():
-        start = datetime.datetime.today() - datetime.timedelta(7)
+        start = datetime.datetime.today() - datetime.timedelta(30)
         end = datetime.datetime.today()
         ohlcv_data[ticker] = yf.download(ticker,start,end, interval=interval_duration, progress = False)
+        ohlcv_data[ticker].dropna(axis = 0, inplace = True) # remove any null rows 
         ohlcv_data[ticker]['gain_pc'] =(ohlcv_data[ticker]["Adj Close"] - stocks[ticker]) *100 /stocks[ticker]
         
         #Webscrapping
@@ -112,11 +112,11 @@ def download_and_email():
         else :
             ohlcv_data[ticker]['stacked_on'] = "OFF"
         
-        if (ohlcv_data[ticker]["Adj Close"][-1] > stocks[ticker])\
+        if (ohlcv_data[ticker]["Adj Close"][-1] >= stocks[ticker])\
             and (datetime.datetime.today().weekday() <= 4) and ((datetime.datetime.now().hour >= int(trading_start_time_hour)) and\
             (datetime.datetime.now().hour <= int(trading_end_time_hour)))== True:
-           print(f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])[0]) },above 21EWM = {ohlcv_data[ticker]["above_21ema_on"][-1]}, stacked = {ohlcv_data[ticker]["stacked_on"][-1]} ')
-           temp = f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])[0]) } ,above 21EWM = {ohlcv_data[ticker]["above_21ema_on"][-1]}, stacked = {ohlcv_data[ticker]["stacked_on"][-1]} '
+           print(f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])) },above 21EWM = {ohlcv_data[ticker]["above_21ema_on"][-1]}, stacked = {ohlcv_data[ticker]["stacked_on"][-1]} ')
+           temp = f'{ticker} is above. Avg.Value = {stocks[ticker]}, Gain  = { round(float(ohlcv_data[ticker]["gain_pc"][-1]),2) } %, Gain for day ={ str(list(gain_day[ticker])) } ,above 21EWM = {ohlcv_data[ticker]["above_21ema_on"][-1]}, stacked = {ohlcv_data[ticker]["stacked_on"][-1]} '
            
          
            message=message+ "\n"+temp
@@ -136,7 +136,8 @@ def download_and_email():
 # 
 
 download_and_email()
-schedule.every(15).minutes.do(download_and_email)
+schedule.every().hour.do(download_and_email)
+
 
 #scheduling every week day
 schedule.every().monday.at(trading_start_time_hour+":00").do(download_and_email)
